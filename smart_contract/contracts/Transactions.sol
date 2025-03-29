@@ -29,4 +29,14 @@ contract Transactions {
         // 调用event,作用是？
         emit Transfer(msg.sender, receiver, amount, message, block.timestamp, keyword);
     }
+
+    // 获取所有交易
+    function getAllTransactions() public view returns (TransferStruct[] memory) {
+        return transactions;
+    }
+
+    // 获取交易次数
+    function getTransactionCount() public view returns (uint256) {
+        return transactionCount;
+    }
 }

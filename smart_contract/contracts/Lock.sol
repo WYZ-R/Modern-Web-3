@@ -17,6 +17,7 @@ contract Lock {
         );
 
         unlockTime = _unlockTime;
+        // 将调用合约用户的地址转化为可支付地址
         owner = payable(msg.sender);
     }
 
