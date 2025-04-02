@@ -4,30 +4,31 @@ import { SiEthereum } from "react-icons/si";
 import { BsInfoCircle } from "react-icons/bs";
 import Loader from "./Loader";
 import { TransactionContext } from "../context/TransactionContext";
+import Input from "./Input";
 
 const companyCommonStyles =
   "min-h-[70px] sm:px-0 px-2 sm:min-w-[120px] flex justify-center items-center border-[0.5px] border-gray-400 text-sm font-light text-white";
 
 const Welcome = () => {
   // 使用context知识
-  const { connectWallet, currentAccount } = useContext(TransactionContext);
-
+  const {
+    connectWallet,
+    currentAccount,
+    isLoading,
+    transactionCount,
+    sendTransaction,
+    formData,
+    handleChange,
+  } = useContext(TransactionContext);
   // 以下为待实现---
-  const [isLoading, setIsLoading] = useState(false);
-  const handleSubmit = () => {};
 
-  const handleChange = (e) => {};
-  //----
-  const Input = ({ placeholder, name, type, value, handleChange }) => (
-    <input
-      placeholder={placeholder}
-      type={type}
-      step={0.0001}
-      value={value}
-      onChange={(e) => handleChange(e, name)}
-      className="my-2 w-full rounded-sm p-2 outline-none bg-transparent text-white border-none text-sm white-glassmorphism"
-    />
-  );
+  const handleSubmit = (e) => {
+    const { addressTo, amount, keyword, message } = formData;
+    e.preventDefault();
+    if (!addressTo || !amount || !keyword || !message) return;
+    sendTransaction();
+  };
+
   return (
     <>
       <div className="flex w-full justify-center items-center">
@@ -95,27 +96,35 @@ const Welcome = () => {
 
             <div className="p-5 sm:w-96 w-full flex flex-col justify-start items-center blue-glassmorphism">
               <Input
+                key="addressTo"
                 placeholder="Address"
                 name="addressTo"
                 type="text"
+                value={formData.addressTo}
                 handleChange={handleChange}
               />
               <Input
+                key="amount" // 添加这一行
                 placeholder="Amount (ETH)"
                 name="amount"
                 type="number"
+                value={formData.amount}
                 handleChange={handleChange}
               />
               <Input
+                key="keyword" // 添加这一行
                 placeholder="Keyword (Gif)"
                 name="keyword"
                 type="text"
+                value={formData.keyword}
                 handleChange={handleChange}
               />
               <Input
+                key="message" // 添加这一行
                 placeholder="Enter Message"
                 name="message"
                 type="text"
+                value={formData.message}
                 handleChange={handleChange}
               />
               {/* 作用是画出高度为1px的实线 */}
