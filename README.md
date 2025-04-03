@@ -4,9 +4,9 @@
 ​Hardhat is also the latest version（2.22.19）\
 ​Testnet: Sepolia\
 ​Contract deployment: Used Hardhat's ​Ignition module\
-​Blockchain node provider: ​Infura\
+​Blockchain node provider: ​Infura
 
-Many outdated methods have been replaced with the latest ones.\
+Many outdated methods have been replaced with the latest ones.
 
 # Test Screenshot:
 Home:
