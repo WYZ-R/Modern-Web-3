@@ -1,7 +1,7 @@
 import React, { children, createContext, useContext, useEffect } from "react";
 import { ethers } from "ethers";
 import { contractAddress, contractABI } from "../utils/constants";
-import { TransactionContext } from "./TransactionContext";
+import TransactionContext from "./TransactionContext";
 import { useState } from "react";
 
 const { ethereum } = window;
@@ -57,6 +57,7 @@ export const TransactionProvider = ({ children }) => {
   const [transactionCount, setTransactionCount] = useState(
     localStorage.getItem("transactionCount")
   );
+  const [transactions, setTransactions] = useState([]);
 
   // 这里好像是react的内容，这里要弄懂
   const handleChange = (e, name) => {
@@ -172,6 +173,7 @@ export const TransactionProvider = ({ children }) => {
         sendTransaction,
         formData,
         handleChange,
+        transactions,
       }}
     >
       {children}

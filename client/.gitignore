@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+//添加
+.env
+.env.local
+.env.development
+.env.production
