@@ -7,6 +7,7 @@
 ​Blockchain node provider: ​Infura
 
 Many outdated methods have been replaced with the latest ones.
+
 If you found this helpful, could you give it a ⭐？
 
 # Test Screenshot:
