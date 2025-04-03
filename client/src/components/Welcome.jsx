@@ -16,7 +16,6 @@ const Welcome = () => {
     connectWallet,
     currentAccount,
     isLoading,
-    transactionCount,
     sendTransaction,
     formData,
     handleChange,

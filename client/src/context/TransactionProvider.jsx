@@ -1,11 +1,10 @@
-import React, { children, createContext, useContext, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
-import { contractAddress, contractABI } from "../utils/constants";
-import TransactionContext from "./TransactionContext";
-import { useState } from "react";
 
+import { contractABI, contractAddress } from "../utils/constants";
+import TransactionContext from "./TransactionContext";
+import { BiColor } from "react-icons/bi";
 const { ethereum } = window;
-const INFURA_API_KEY = "4d4c7d07efb0440690aad69b499a1a95";
 
 //创建以太坊合约
 const createEthereumContract = async () => {
@@ -42,138 +41,174 @@ const createEthereumContract = async () => {
   }
 };
 
-// 这段代码有何作用？children的作用是什么？children是子组件
-//包裹所有子组件（children），并告诉它们：“以后要寄快递，直接来我这里拿工具！
 export const TransactionProvider = ({ children }) => {
-  const [currentAccount, setCurrentAccount] = useState("");
-  const [formData, setFormData] = useState({
+  const [formData, setformData] = useState({
     addressTo: "",
     amount: "",
     keyword: "",
     message: "",
   });
+  const [currentAccount, setCurrentAccount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  // 这里的localStorage知识需要学习
   const [transactionCount, setTransactionCount] = useState(
-    localStorage.getItem("transactionCount")
+    Number(localStorage.getItem("transactionCount")) || 0
   );
   const [transactions, setTransactions] = useState([]);
 
-  // 这里好像是react的内容，这里要弄懂
   const handleChange = (e, name) => {
-    console.log("handleChange called:", name, e.target.value);
-    setFormData((prevState) => ({ ...prevState, [name]: e.target.value }));
+    setformData((prevState) => ({ ...prevState, [name]: e.target.value }));
   };
 
-  // useEffect作用？这里的作用就是在组件渲染后只执行一次这里的代码,这里居然不能直接使用currentAccount
-  useEffect((currentAccount) => {
-    checkIfWalletIsConnect();
-    if (currentAccount) {
-      console.log(currentAccount);
-    }
-  }, []);
+  const getAllTransactions = async () => {
+    try {
+      if (ethereum) {
+        const transactionsContract = await createEthereumContract();
 
-  // 钱包是否连接
+        const availableTransactions =
+          await transactionsContract.getAllTransactions();
+
+        const structuredTransactions = availableTransactions.map(
+          (transaction) => ({
+            addressTo: transaction.receiver,
+            addressFrom: transaction.sender,
+            timestamp: new Date(
+              Number(transaction.timestamp) * 1000
+            ).toLocaleString(),
+            message: transaction.message,
+            keyword: transaction.keyword,
+            amount: ethers.formatEther(transaction.amount),
+          })
+        );
+
+        console.log(structuredTransactions);
+
+        setTransactions(structuredTransactions);
+      } else {
+        console.log("Ethereum is not present");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const checkIfWalletIsConnect = async () => {
     try {
-      if (!ethereum) return alert("Please install MetaMask");
+      if (!ethereum) return alert("Please install MetaMask.");
+
       const accounts = await ethereum.request({ method: "eth_accounts" });
-      console.log(accounts);
+
       if (accounts.length) {
         setCurrentAccount(accounts[0]);
+        console.log("执行检查钱包是否连接，下一步获取所有交易");
+        getAllTransactions();
       } else {
         console.log("No accounts found");
       }
     } catch (error) {
-      console.error(error);
+      console.log(error);
     }
   };
 
-  // 连接钱包
+  const checkIfTransactionsExists = async () => {
+    try {
+      if (ethereum) {
+        const transactionsContract = await createEthereumContract();
+        const currentTransactionCount =
+          await transactionsContract.getTransactionCount();
+        console.log("检查交易是否存在，下一步存储交易次数到localStorage");
+        console.log("交易次数：" + currentTransactionCount);
+        window.localStorage.setItem(
+          "transactionCount",
+          currentTransactionCount
+        );
+      }
+    } catch (error) {
+      console.log(error);
+
+      throw new Error("No ethereum object");
+    }
+  };
+
   const connectWallet = async () => {
     try {
-      if (!ethereum) return alert("Please install MetaMask");
+      if (!ethereum) return alert("Please install MetaMask.");
+
       const accounts = await ethereum.request({
         method: "eth_requestAccounts",
       });
+
       setCurrentAccount(accounts[0]);
-      console.log(accounts);
-      //重新加载页面：强制刷新当前页面，重新从服务器获取资源（如 HTML、CSS、JavaScript 等）
-      // window.location.reload();
+      window.location.reload();
     } catch (error) {
-      if (error.code === 4001) {
-        console.log("Please connect to MetaMask");
-      } else {
-        console.error(error);
-      }
+      console.log(error);
+
+      throw new Error("No ethereum object");
     }
   };
 
-  // 发送交易
   const sendTransaction = async () => {
     try {
-      console.log("sendTransaction called");
-      if (!ethereum) return alert("Please install MetaMask");
-      // 解构
-      const { addressTo, amount, keyword, message } = formData;
-      // 创建交易合约
-      const transactionsContract = createEthereumContract();
-      // 将wei转化为eth单位
-      const parsedAmount = ethers.parseEther(amount);
+      if (ethereum) {
+        const { addressTo, amount, keyword, message } = formData;
+        const transactionsContract = await createEthereumContract();
+        const parsedAmount = ethers.parseEther(amount);
 
-      // 发送交易方法
-      await ethereum.request({
-        method: "eth_sendTransaction",
-        params: [
-          {
-            // 发送人
-            from: currentAccount,
-            // 接收人
-            to: addressTo,
-            //十六进制,去掉0x 用76c0来转化为10进制是30400单位是wei
-            gas: "0x76c0",
-            // ._hex 以十六进制（hex）格式存储数值。这里处理问题
-            value: parsedAmount,
-          },
-        ],
-      });
-      console.log("金额:" + parsedAmount);
-      console.log("金额(十六进制):" + parsedAmount._hex);
-      //为什么我发送的钱是0？
-      // 调用了我们合约的方法，为什么会返回一个hash
-      const transactionHash = await transactionsContract.addToBlockchain(
-        addressTo,
-        parsedAmount,
-        message,
-        keyword
-      );
-      setIsLoading(true);
-      // .hash的作用是什么？
-      console.log(`Loading - ${transactionHash.hash}`);
-      //wait方法是哪里的？作用是什么？
-      await transactionHash.wait();
-      console.log(`Success - ${transactionHash.hash}`);
-      setIsLoading(false);
-      const transactionsCount =
-        await transactionsContract.getTransactionCount();
-      setTransactionCount(transactionsCount.toNumber());
+        await ethereum.request({
+          method: "eth_sendTransaction",
+          params: [
+            {
+              from: currentAccount,
+              to: addressTo,
+              gas: "0x5208",
+              value: `0x${parsedAmount.toString(16)}`,
+            },
+          ],
+        });
+
+        const transactionHash = await transactionsContract.addToBlockchain(
+          addressTo,
+          parsedAmount,
+          message,
+          keyword
+        );
+
+        setIsLoading(true);
+        console.log(`Loading - ${transactionHash.hash}`);
+        await transactionHash.wait();
+        console.log(`Success - ${transactionHash.hash}`);
+        setIsLoading(false);
+
+        const transactionsCount =
+          await transactionsContract.getTransactionCount();
+
+        setTransactionCount(Number(transactionsCount));
+        window.location.reload();
+      } else {
+        console.log("No ethereum object");
+      }
     } catch (error) {
-      console.error(error.message);
+      console.log(error);
+
+      throw new Error("No ethereum object");
     }
   };
 
+  useEffect(() => {
+    checkIfWalletIsConnect();
+    checkIfTransactionsExists();
+  }, [transactionCount]);
+
   return (
-    // 键值对，如果你的键跟值都是同一名称就可以省略键
     <TransactionContext.Provider
       value={{
+        transactionCount,
         connectWallet,
+        transactions,
         currentAccount,
         isLoading,
-        transactionCount,
         sendTransaction,
-        formData,
         handleChange,
-        transactions,
+        formData,
       }}
     >
       {children}
